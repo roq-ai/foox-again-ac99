@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["clientExtensions", "postgresqlExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  extensions      = [pgcrypto]
+}
+
+model application {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at         DateTime  @default(now()) @db.Timestamp(6)
+  updated_at         DateTime  @default(now()) @db.Timestamp(6)
+  application_status String?   @default("open") @db.VarChar(255)
+  application_date   DateTime? @db.Timestamp(6)
+  freelancer_id      String    @db.Uuid
+  job_id             String    @db.Uuid
+  user               user      @relation(fields: [freelancer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  job                job       @relation(fields: [job_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model company {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  description String?  @db.VarChar(255)
+  image       String?  @db.VarChar(255)
+  name        String   @db.VarChar(255)
+  created_at  DateTime @default(now()) @db.Timestamp(6)
+  updated_at  DateTime @default(now()) @db.Timestamp(6)
+  user_id     String   @db.Uuid
+  tenant_id   String   @db.VarChar(255)
+  user        user     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  job         job[]
+}
+
+model country {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @default(now()) @db.Timestamp(6)
+  name       String   @db.VarChar(255)
+  job        job[]
+}
+
+model freelance_profile {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at       DateTime @default(now()) @db.Timestamp(6)
+  updated_at       DateTime @default(now()) @db.Timestamp(6)
+  skills           String?  @db.VarChar(255)
+  portfolio_link   String?  @db.VarChar(255)
+  experience_years Int?
+  freelancer_id    String?  @db.Uuid
+  user             user?    @relation(fields: [freelancer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model hiring {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at        DateTime @default(now()) @db.Timestamp(6)
+  updated_at        DateTime @default(now()) @db.Timestamp(6)
+  freelancer_id     String   @db.Uuid
+  job_id            String   @db.Uuid
+  contract_duration Int?
+  job_description   String?
+  user              user     @relation(fields: [freelancer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  job               job      @relation(fields: [job_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model job {
+  id               String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at       DateTime      @default(now()) @db.Timestamp(6)
+  updated_at       DateTime      @default(now()) @db.Timestamp(6)
+  company_id       String        @db.Uuid
+  job_duration     Int?
+  job_requirements String?
+  job_location     String?       @db.VarChar(255)
+  country_id       String?       @db.Uuid
+  application      application[]
+  hiring           hiring[]
+  company          company       @relation(fields: [company_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  country          country?      @relation(fields: [country_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model user {
+  id                String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email             String              @unique @db.VarChar(255)
+  firstName         String?             @db.VarChar(255)
+  lastName          String?             @db.VarChar(255)
+  roq_user_id       String              @db.VarChar(255)
+  tenant_id         String              @db.VarChar(255)
+  created_at        DateTime            @default(now()) @db.Timestamp(6)
+  updated_at        DateTime            @default(now()) @db.Timestamp(6)
+  application       application[]
+  company           company[]
+  freelance_profile freelance_profile[]
+  hiring            hiring[]
+}
